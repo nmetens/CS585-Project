@@ -101,6 +101,22 @@ def _rowround(y: list[int]) -> list[int]:
     y15,y12,y13,y14 = _quarterround(y[15], y[12], y[13], y[14])
     return [y0,y1,y2,y3,y4,y5,y6,y7,y8,y9,y10,y11,y12,y13,y14,y15]
 
+def _columnround(x: list[int]) -> list[int]:
+    """
+    Apply the Salsa20 columnround to a 16-word state (4x4 matrix in row-major order).
+
+    Columns (by indices):
+      (0,4,8,12), (5,9,13,1), (10,14,2,6), (15,3,7,11)
+    Returns a new 16-word list.
+    """
+    assert len(x) == 16
+    x0,x4,x8,x12     = _quarterround(x[0],  x[4],  x[8],  x[12])
+    x5,x9,x13,x1     = _quarterround(x[5],  x[9],  x[13], x[1])
+    x10,x14,x2,x6    = _quarterround(x[10], x[14], x[2],  x[6])
+    x15,x3,x7,x11    = _quarterround(x[15], x[3],  x[7],  x[11])
+    return [x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15]
+
+
 def main():
     """
         Testing function.
@@ -171,8 +187,10 @@ def main():
     print("in: ", [hex(v) for v in state])
 
     r = _rowround(state)
+    c = _columnround(state)
 
     print("rowround   :", [hex(v) for v in r])
+    print("columnround:", [hex(v) for v in c])
 
 if __name__ == "__main__":
     main()
