@@ -122,6 +122,79 @@ def _doubleround(x: list[int]) -> list[int]:
     """
     return _rowround(_columnround(x))
 
+def _salsa20_hash(state_words: list[int]) -> bytes:
+    """
+    Apply Salsa20/20 to a 16-word (32-bit) state and return 64 bytes.
+    """
+    assert len(state_words) == 16
+    x = state_words[:]            # original
+    w = state_words[:]            # working
+    for _ in range(10):           # 20 rounds = 10 doublerounds
+        w = _doubleround(w)
+    out = [(w[i] + x[i]) & 0xffffffff for i in range(16)]
+    return b"".join(_u32_to_le_bytes(v) for v in out)
+
+# --- 2) initial 16-word state for 32-byte key ---
+_SIGMA = b"expand 32-byte k"  # 16 ASCII bytes
+
+def _initial_state_256(key32: bytes, nonce8: bytes, counter64: int) -> list[int]:
+    """
+    Build the 4x4 Salsa20 state (row-major) for a 32-byte key and 8-byte nonce.
+    Layout (32-bit LE words):
+      0: c0   1..4: key[0..15]   5: c1
+      6..7: nonce                8..9: counter
+     10: c2  11..14: key[16..31] 15: c3
+    """
+    if len(key32) != 32:
+        raise ValueError("key must be 32 bytes")
+    if len(nonce8) != 8:
+        raise ValueError("nonce must be 8 bytes")
+
+    c = _SIGMA
+    k0, k1 = key32[:16], key32[16:]
+
+    return [
+        _le_bytes_to_u32(c[0:4]),
+        _le_bytes_to_u32(k0[0:4]),
+        _le_bytes_to_u32(k0[4:8]),
+        _le_bytes_to_u32(k0[8:12]),
+        _le_bytes_to_u32(k0[12:16]),
+        _le_bytes_to_u32(c[4:8]),
+        _le_bytes_to_u32(nonce8[0:4]),
+        _le_bytes_to_u32(nonce8[4:8]),
+        counter64 & 0xffffffff,
+        (counter64 >> 32) & 0xffffffff,
+        _le_bytes_to_u32(c[8:12]),
+        _le_bytes_to_u32(k1[0:4]),
+        _le_bytes_to_u32(k1[4:8]),
+        _le_bytes_to_u32(k1[8:12]),
+        _le_bytes_to_u32(k1[12:16]),
+        _le_bytes_to_u32(c[12:16]),
+    ]
+
+# --- 3) One keystream block (64 bytes) ---
+def salsa20_block(key32: bytes, nonce8: bytes, counter64: int) -> bytes:
+    state = _initial_state_256(key32, nonce8, counter64)
+    return _salsa20_hash(state)
+
+# --- 4) Stream XOR (encrypt/decrypt) ---
+def salsa20_stream_xor(key32: bytes, nonce8: bytes, data: bytes, initial_block: int = 0) -> bytes:
+    """
+    XOR 'data' with the Salsa20 keystream. Same function for enc/dec.
+    IMPORTANT: Never reuse (key, nonce) across distinct messages.
+    """
+    out = bytearray(len(data))
+    block = initial_block
+    i = 0
+    while i < len(data):
+        ks = salsa20_block(key32, nonce8, block)
+        take = min(64, len(data) - i)
+        for j in range(take):
+            out[i + j] = data[i + j] ^ ks[j]
+        i += take
+        block += 1
+    return bytes(out)
+
 def main():
     """
         Testing function.
@@ -198,6 +271,16 @@ def main():
     print("rowround   :", [hex(v) for v in r])
     print("columnround:", [hex(v) for v in c])
     print("doubleround:", [hex(v) for v in d])
+
+    print("\n#################################")
+    print("Salsa20 STREAM DEMO")
+    print("#################################")
+    key   = b"\x00" * 32
+    nonce = b"\x00" * 8
+    msg   = b"hello salsa20"
+    ct    = salsa20_stream_xor(key, nonce, msg)
+    pt    = salsa20_stream_xor(key, nonce, ct)
+    print("round-trip ok:", pt == msg)
 
 if __name__ == "__main__":
     main()
