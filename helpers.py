@@ -1,3 +1,4 @@
+
 def _u32(x: int) -> int:
     """
         Forces an integer into 32-bit unsigned range (& 0xffffffff).
