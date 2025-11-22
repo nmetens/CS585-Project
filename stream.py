@@ -14,7 +14,7 @@ inverse, the same function performs both encryption and decryption.
 This is the user-facing interface: the part applications call.
 """
 
-from .core import salsa20_block
+from core import salsa20_block
 
 # Stream XOR (encrypt/decrypt)
 def salsa20_stream_xor(key32: bytes, nonce8: bytes, data: bytes, initial_block: int = 0) -> bytes:

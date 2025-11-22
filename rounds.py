@@ -15,7 +15,7 @@ directly to the steps described in the Salsa20 specification. They form
 the core diffusion mechanism in the 20-round Salsa20 block function.
 """
 
-from .helpers import _rotl32, _u32
+from helpers import _rotl32, _u32
 
 def _quarterround(y0: int, y1: int, y2: int, y3: int) -> tuple[int, int, int, int]:
     """

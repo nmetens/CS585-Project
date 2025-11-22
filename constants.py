@@ -12,4 +12,4 @@ Keeping constants in a dedicated module makes it easier to extend
 the implementation later (e.g., Chacha or XSalsa20 constants).
 """
 
-_SIGMA = b"expand 32-byte k"  # 16 ASCII bytes
+SIGMA = b"expand 32-byte k"  # 16 ASCII bytes

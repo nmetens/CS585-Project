@@ -15,9 +15,9 @@ These functions transform key/nonce/counter inputs into keystream bytes.
 They implement the Salsa20/20 specification as documented by D. J. Bernstein.
 """
 
-from .helpers import _u32_to_le_bytes, _le_bytes_to_u32
-from .rounds import _doubleround
-from .constants import SIGMA
+from helpers import _u32_to_le_bytes, _le_bytes_to_u32
+from rounds import _doubleround
+from constants import SIGMA
 
 def _initial_state_256(key32: bytes, nonce8: bytes, counter64: int) -> list[int]:
     """
@@ -32,7 +32,7 @@ def _initial_state_256(key32: bytes, nonce8: bytes, counter64: int) -> list[int]
     if len(nonce8) != 8:
         raise ValueError("nonce must be 8 bytes")
 
-    c = _SIGMA
+    c = SIGMA
     k0, k1 = key32[:16], key32[16:]
 
     return [
@@ -54,9 +54,34 @@ def _initial_state_256(key32: bytes, nonce8: bytes, counter64: int) -> list[int]
         _le_bytes_to_u32(c[12:16]),
     ]
 
+def _salsa20_hash(state_words: list[int]) -> bytes:
+    """
+    Apply the Salsa20/20 core hash function to a 16-word state
+    and return a 64-byte keystream block.
+
+    Steps:
+      1. Copy original state (x)
+      2. Run 10 doublerounds (20 rounds total)
+      3. Feed-forward: add original state words to final state words
+      4. Serialize 16 words into 64 little-endian bytes
+    """
+    assert len(state_words) == 16
+
+    # Original state
+    x = state_words[:]       # 16 words
+    w = state_words[:]       # Working buffer
+
+    # Perform 20 rounds (10 double-rounds)
+    for _ in range(10):
+        w = _doubleround(w)
+
+    # Feed-forward addition: (w + x) mod 2^32
+    out = [(w[i] + x[i]) & 0xffffffff for i in range(16)]
+
+    # Serialize 16 words → 64 bytes (little endian)
+    return b"".join(_u32_to_le_bytes(v) for v in out)
+
 # --- 3) One keystream block (64 bytes) ---
 def salsa20_block(key32: bytes, nonce8: bytes, counter64: int) -> bytes:
     state = _initial_state_256(key32, nonce8, counter64)
     return _salsa20_hash(state)
-
-
