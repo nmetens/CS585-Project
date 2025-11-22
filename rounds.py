@@ -1,3 +1,5 @@
+from .helpers import _rotl32, _u32
+
 def _quarterround(y0: int, y1: int, y2: int, y3: int) -> tuple[int, int, int, int]:
     """
     Salsa20 quarterround: apply ARX (add-rotate-xor) sequence.
