@@ -1,3 +1,20 @@
+"""
+rounds.py
+----------
+
+Implementation of Salsa20’s internal mixing operations.
+
+This module defines:
+    1) _quarterround --— the fundamental ARX transformation on 4 words
+    2) _rowround     --— applies quarterrounds across matrix rows
+    3) _columnround  --— applies quarterrounds down matrix columns
+    4) _doubleround  --— one full Salsa20 double-round (column + row)
+
+These functions operate on a 16-word (4×4) state matrix and correspond
+directly to the steps described in the Salsa20 specification. They form
+the core diffusion mechanism in the 20-round Salsa20 block function.
+"""
+
 from .helpers import _rotl32, _u32
 
 def _quarterround(y0: int, y1: int, y2: int, y3: int) -> tuple[int, int, int, int]:

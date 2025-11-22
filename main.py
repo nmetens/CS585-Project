@@ -1,3 +1,14 @@
+"""
+main.py
+--------
+
+Example driver for the modular Salsa20 implementation.
+
+Demonstrates how to import and use the public API to encrypt/decrypt data.
+This file is not part of the library itself — it’s a practical entry point
+for running tests, demos, or integrating the cipher into an application.
+"""
+
 from salsa20 import salsa20_stream_xor
 
 def main():

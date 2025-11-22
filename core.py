@@ -1,3 +1,20 @@
+"""
+core.py
+--------
+
+Implements the Salsa20 block function (the 20-round core).
+
+This module provides:
+    1) _initial_state_256 --— constructs the 16-word state matrix
+    2) _salsa20_hash      --— applies 20 rounds (10 doublerounds)
+                            + feed-forward to produce 64 bytes
+    3) salsa20_block      --— public function returning one 64-byte
+                            keystream block for (key, nonce, counter)
+
+These functions transform key/nonce/counter inputs into keystream bytes.
+They implement the Salsa20/20 specification as documented by D. J. Bernstein.
+"""
+
 from .helpers import _u32_to_le_bytes, _le_bytes_to_u32
 from .rounds import _doubleround
 from .constants import SIGMA

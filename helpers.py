@@ -1,3 +1,18 @@
+"""
+helpers.py
+-----------
+
+Low-level utility functions used throughout the Salsa20 implementation.
+
+This module implements basic 32-bit operations required by the cipher:
+    1) _u32                                --— enforce 32-bit modular arithmetic
+    2) _rotl32                             --— 32-bit left rotation
+    3) _le_bytes_to_u32 / _u32_to_le_bytes --— little-endian conversions
+
+These are the primitive building blocks for ARX operations (Add-Rotate-Xor)
+and for interpreting key, nonce, and state words in the Salsa20 core.
+All higher-level crypto logic depends on these helpers.
+"""
 
 def _u32(x: int) -> int:
     """
